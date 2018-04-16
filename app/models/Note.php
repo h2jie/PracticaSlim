@@ -9,6 +9,11 @@
 class Note
 {
     /**
+     * @var int $id
+     */
+    private $id;
+
+    /**
      * @var string
      */
     private $title;
@@ -90,6 +95,14 @@ class Note
         $this->createDate = $createDate;
         $this->lastModificationsDate = $lastModificationsDate;
         $this->user = $user;
+    }
+
+    /**
+     * @return int
+     */
+    public function getId()
+    {
+        return $this->id;
     }
 
 
