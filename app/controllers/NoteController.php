@@ -4,12 +4,15 @@ use Slim\Http\Response;
 
 class NoteController
 {
-    public function firstTest(Request $request, Response $response){
+    public function firstTest(Request $request, Response $response, $args = []){
 
         $arrayToReturn = array('name' => 'Jose', 'edad'=> 40);
         $newResponse = $response->withJson($arrayToReturn,200);
-        return $newResponse;
+        $response->getBody()->write( $newResponse);
+        return $response;
     }
+
+
 }
 
 
