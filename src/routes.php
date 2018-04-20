@@ -11,5 +11,15 @@ $app->get('/', function (Request $request, Response $response) {
 
     // Render index view
     $controller = new NoteController();
-    return $controller->firstTest($request,$response);
+    return NoteController::firstTest($request,$response);
 });
+
+$app->post('/registeruser', function (Request $request, Response $response) {
+    // Sample log message
+    $this->logger->info("Slim-Skeleton '/registeruser' route");
+
+    // Render index view
+    return UserController::registerUser($request,$response);
+});
+
+
