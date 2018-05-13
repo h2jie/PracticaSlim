@@ -5,21 +5,24 @@ use Slim\Http\Response;
 
 // Routes
 
-$app->get('/', function (Request $request, Response $response) {
-    // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
+$app->get('/', NoteController::class . ':getMainPage');
 
-    // Render index view
-    $controller = new NoteController();
-    return NoteController::firstTest($request,$response);
-});
+$app->get('/getAll', NoteController::class . ':getAll');
 
-$app->post('/registeruser', function (Request $request, Response $response) {
-    // Sample log message
-    $this->logger->info("Slim-Skeleton '/registeruser' route");
+$app->get('/getPublic', NoteController::class . ':getPublic');
 
-    // Render index view
-    return UserController::registerUser($request,$response);
-});
+$app->get('/getOne', NoteController::class . ':getOne');
 
+$app->post('/insert', NoteController::class . ':insert');
 
+$app->delete('/remove', NoteController::class . ':remove');
+
+$app->get('/getAllWithTag', NoteController::class . ':getAllWithTag');
+
+$app->put('/addTagOnNote', NoteController::class . ':addTagOnNote');
+
+$app->put('/deleteTagOnNote', NoteController::class . ':removeTagOnNote');
+
+$app->put('/updateNote', NoteController::class . ':updateNote');
+
+$app->put('/flipPrivate', NoteController::class . ':flipPrivate');
