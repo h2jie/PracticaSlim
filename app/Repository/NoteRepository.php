@@ -1,29 +1,28 @@
 <?php
+namespace App\Repository;
 
-namespace app\controller;
-
-use app\Repository;
+use App\entity\Notes;
+use App\MainRepository;
 use DateTime;
 use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\ORMException;
-use Notes;
 
-class NoteRepository extends Repository
+
+class NoteRepository extends MainRepository
 {
     /**
      * @return array
      */
-    public function getMainPageAction()
+    public function getRoutePage()
     {
-        $response = array('code' => 200, 'msg' => 'Wellcome to the API');
-        return $response;
+        $mainPage = array('code' => 200, 'msg' => 'Wellcome to main route');
+        return $mainPage;
     }
 
     /**
-     * @param string|null $optionalSort
      * @return array
      */
-    public function getAllAction($optionalSort = null)
+    public function fetchAllNotes($optionalSort = null)
     {
         if ($optionalSort != null) {
             if (strtolower($optionalSort) == 'asc') {
@@ -50,7 +49,6 @@ class NoteRepository extends Repository
             $notes = $this->entityManager->getRepository(Notes::class)->findAll();
         }
 
-
         if (empty($notes)) {
             $arr = array('code' => 204, 'msg' => 'No notes found');
             return $arr;
@@ -68,10 +66,9 @@ class NoteRepository extends Repository
     }
 
     /**
-     * @param string|null $optionalSort
      * @return array
      */
-    public function getPublicAction($optionalSort = null)
+    public function fetchAllPublic($optionalSort = null)
     {
         if ($optionalSort != null) {
             if (strtolower($optionalSort) == 'asc') {
@@ -79,27 +76,27 @@ class NoteRepository extends Repository
                  * @var Notes[] $publicNotes
                  */
                 $publicNotes = $this->entityManager->getRepository(Notes::class)->findBy(
-                    array('private' => false),
-                    array('title' => strtoupper($optionalSort))
+                    array('privada' => false),
+                    array('titulo' => strtoupper($optionalSort))
                 );
             } else if (strtolower($optionalSort) == 'desc') {
                 /**
                  * @var Notes[] $publicNotes
                  */
                 $publicNotes = $this->entityManager->getRepository(Notes::class)->findBy(
-                    array('private' => false),
-                    array('createdata' => strtoupper($optionalSort))
+                    array('privada' => false),
+                    array('fechaCreacion' => strtoupper($optionalSort))
                 );
             }
         } else {
             /**
              * @var Notes[] $publicNotes
              */
-            $publicNotes = $this->entityManager->getRepository(Notes::class)->findBy(array('private' => false));
+            $publicNotes = $this->entityManager->getRepository(Notes::class)->findBy(array('privada' => false));
         }
 
-        if (empty($publicNotes)) {
-            $arr = array('code' => 204, 'msg' => 'No notes found');
+        if (is_null($publicNotes)) {
+            $arr = array('code' => 204, 'msg' => 'Could not found any notes');
             return $arr;
         } else {
             $publicNotes = array_map(
@@ -118,7 +115,7 @@ class NoteRepository extends Repository
      * @param $id
      * @return array
      */
-    public function getOneAction($id)
+    public function fetchOneById($id)
     {
         /**
          * @var Notes $note
@@ -133,62 +130,61 @@ class NoteRepository extends Repository
     }
 
     /**
-     * @param $bodyParameters
      * @return array|null
      */
-    public function insertAction($bodyParameters)
+    public function insertNote($body)
     {
         $arr = null;
 
-        $title = $bodyParameters["title"];
-        $content = $bodyParameters["content"];
-        $private = $bodyParameters["private"];
-        $tag1 = $bodyParameters["tag1"];
-        $tag2 = $bodyParameters["tag2"];
-        $tag3 = $bodyParameters["tag3"];
-        $tag4 = $bodyParameters["tag4"];
-        $book = $bodyParameters["book"];
+        $title = $body["titulo"];
+        $content = $body["descripcio"];
+        $private = $body["privada"];
+        $tag1 = $body["tag1"];
+        $tag2 = $body["tag2"];
+        $tag3 = $body["tag3"];
+        $tag4 = $body["tag4"];
+        $book = $body["book"];
+        $usuario = $body["usuario"];
         $createData = new DateTime();
 
         $notes = new Notes;
-        $notes->setTitle($title);
-        $notes->setContent($content);
-        $notes->setPrivate($private);
+        $notes->setTitulo($title);
+        $notes->setDescripcion($content);
+        $notes->setPrivada($private);
         $notes->setTag1($tag1);
         $notes->setTag2($tag2);
         $notes->setTag3($tag3);
         $notes->setTag4($tag4);
         $notes->setBook($book);
-        $notes->setCreatedata($createData);
-        $notes->setUser("LSAlumne");
+        $notes->setFechaCreacion($createData);
+        $notes->setUsuario($usuario);
 
         if ($title != "" || $title != null) {
             try {
                 $this->entityManager->persist($notes);
                 $this->entityManager->flush($notes);
-                $arr = array('code' => 200, 'msg' => 'Note inserted');
+                $arr = array('code' => 200, 'msg' => 'Note inserted correctly');
             } catch (ORMException $e) {
                 $arr = array('code' => 409, 'msg' => 'Could not insert the note');
             }
         } else {
-            $arr = array('code' => 409, 'msg' => 'Title must not be null');
+            $arr = array('code' => 409, 'msg' => 'Title must be insterted');
         }
 
         return $arr;
     }
 
     /**
-     * @param $id
      * @return int
      */
-    public function removeAction($id)
+    public function removeNote($id)
     {
         /**
          * @var Notes $note
          */
         $note = $this->entityManager->getRepository(Notes::class)->findOneBy(array('id' => $id));
 
-        if (empty($note)) {
+        if (is_null($note)) {
             return 204;
         }
 
@@ -202,29 +198,26 @@ class NoteRepository extends Repository
     }
 
     /**
-     * @param $tag
      * @param string|null $sort
      * @return array|null
      */
-    public function getAllWithTagAction($tag, $sort = null)
+    public function fetchAllWithTag($tag)
     {
         $conn = $this->entityManager->getConnection();
-
-        if ($sort == null) {
+        $sql = "SELECT * 
+FROM notes 
+WHERE (tag1 LIKE :tag 
+OR tag2 LIKE :tag 
+OR tag3 LIKE :tag 
+OR tag4 LIKE :tag)
+AND PRIVADA = 0";
             try {
-                $stmt = $conn->prepare(
-                    "SELECT * 
-                              FROM notes 
-                              WHERE tag1 LIKE :tag 
-                              OR tag2 LIKE :tag 
-                              OR tag3 LIKE :tag 
-                              OR tag4 LIKE :tag"
-                );
+                $stmt = $conn->prepare($sql);
                 $stmt->bindValue('tag', $tag);
 
                 $stmt->execute();
             } catch (DBALException $e) {
-                return array('code' => 204, 'msg' => 'No notes found with that tag');
+                return array('code' => 204, 'msg' => 'No notes found');
             }
 
 
@@ -234,99 +227,36 @@ class NoteRepository extends Repository
             if ($notes != null || !empty($notes)) {
                 return array('code' => 200, 'msg' => $notes);
             } else {
-                return array('code' => 204, 'msg' => 'No notes found with that tag');
+                return array('code' => 204, 'msg' => 'No notes found');
             }
-        } else {
-            if (strtolower($sort) == "asc") {
-                try {
-                    $stmt = $conn->prepare(
-                        "SELECT * 
-                                  FROM notes 
-                                  WHERE tag1 LIKE :tag 
-                                  OR tag2 LIKE :tag 
-                                  OR tag3 LIKE :tag 
-                                  OR tag4 LIKE :tag
-                                  ORDER BY title ASC"
-                    );
-                    $stmt->bindValue('tag', $tag);
 
-                    $stmt->execute();
-                } catch (DBALException $e) {
-
-                }
-
-
-                $notes = $stmt->fetchAll();
-
-                if ($notes != null || !empty($notes)) {
-                    return array('code' => 200, 'msg' => $notes);
-                } else {
-                    return array('code' => 204, 'msg' => 'No notes found with that tag');
-                }
-            } else if (strtolower($sort) == "desc") {
-                try {
-                    $stmt = $conn->prepare(
-                        "SELECT * 
-                                  FROM notes 
-                                  WHERE tag1 LIKE :tag 
-                                  OR tag2 LIKE :tag 
-                                  OR tag3 LIKE :tag 
-                                  OR tag4 LIKE :tag
-                                  ORDER BY createData DESC"
-                    );
-                    $stmt->bindValue('tag', $tag);
-
-                    $stmt->execute();
-                } catch (DBALException $e) {
-                    return array('code' => 204, 'msg' => 'No notes found with that tag');
-                }
-
-                $notes = $stmt->fetchAll();
-
-                if ($notes != null || !empty($notes)) {
-                    return array('code' => 200, 'msg' => $notes);
-                } else {
-                    return array('code' => 204, 'msg' => 'No notes found with that tag');
-                }
-            }
-        }
 
         return null;
     }
 
     /**
-     * @param $id
-     * @param $title
-     * @param $content
      * @param array|null $optionalParams
      * @return array|null
      */
-    public function updateNoteAction($id, $title, $content, $optionalParams = null)
+    public function updateNote($id, $title, $content,$book,$usuario)
     {
         /**
          * @var Notes $note
          */
         $note = $this->entityManager->getRepository(Notes::class)->findOneBy(array('id' => $id));
 
-        $note->setTitle($title);
-        $note->setContent($content);
-        $note->setLastmodificationdata(new DateTime());
+        $note->setTitulo($title);
+        $note->setDescripcion($content);
+        $note->setUltimaModificacion(new DateTime());
 
-        if ($optionalParams != null || count($optionalParams) > 0) {
-            $user = $optionalParams['user'] ?: null;
-            $book = $optionalParams['book'] ?: null;
-
-            if ($book != null) {
-                $note->setBook($book);
-            }
-
-            if ($user != null) {
-                $note->setUser($user);
-            }
+        if ($book!== ""){
+            $note->setBook($book);
         }
-
+        if ($usuario!= ""){
+            $note->setUsuario($usuario);
+        }
         try {
-            $this->entityManager->merge($note);
+            //$this->entityManager->merge($note);
             $this->entityManager->flush();
         } catch (ORMException $e) {
             return null;
@@ -336,12 +266,10 @@ class NoteRepository extends Repository
     }
 
     /**
-     * @param $id
-     * @param $tag
      * @return null
      * @throws ORMException
      */
-    public function addTagOnNoteAction($id, $tag)
+    public function updateNoteTag($id, $tag)
     {
         /**
          * @var Notes $note
@@ -351,35 +279,29 @@ class NoteRepository extends Repository
         if (empty($note)) {
             return 204;
         } else {
-            if (empty($note->getTag1())) {
+            if (is_null($note->getTag1())) {
                 $note->setTag1($tag);
-                $this->entityManager->persist($note);
                 $this->entityManager->flush();
                 return 200;
-            } elseif (empty($note->getTag2())) {
+            } elseif (is_null($note->getTag2())) {
                 $note->setTag2($tag);
-                $this->entityManager->persist($note);
                 $this->entityManager->flush();
                 return 200;
-            } elseif (empty($note->getTag3())) {
+            } elseif (is_null($note->getTag3())) {
                 $note->setTag3($tag);
-                $this->entityManager->persist($note);
                 $this->entityManager->flush();
                 return 200;
-            } elseif (empty($note->getTag4())) {
+            } elseif (is_null($note->getTag4())) {
                 $note->setTag4($tag);
-                $this->entityManager->persist($note);
                 $this->entityManager->flush();
                 return 200;
             } else {
-                return 409;
+                return 400;
             }
         }
     }
 
     /**
-     * @param $id
-     * @param $tag
      * @return array|null
      * @throws ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
@@ -390,20 +312,16 @@ class NoteRepository extends Repository
         $note = $this->entityManager->getRepository(Notes::class)->findOneBy(array('id' => $id));
 
         if ($note->getTag1() == $tag) {
-            $note->setTag1("");
-            $this->entityManager->merge($note);
+            $note->setTag1(null);
             $this->entityManager->flush();
         } elseif ($note->getTag2() == $tag) {
-            $note->setTag2("");
-            $this->entityManager->merge($note);
+            $note->setTag2(null);
             $this->entityManager->flush();
         } elseif ($note->getTag3() == $tag) {
-            $note->setTag3("");
-            $this->entityManager->merge($note);
+            $note->setTag3(null);
             $this->entityManager->flush();
         } elseif ($note->getTag4() == $tag) {
-            $note->setTag4("");
-            $this->entityManager->merge($note);
+            $note->setTag4(null);
             $this->entityManager->flush();
         } else {
             return null;
@@ -413,10 +331,9 @@ class NoteRepository extends Repository
     }
 
     /**
-     * @param $id
      * @return array|null
      */
-    public function flipPrivateOnOne($id)
+    public function changePrivateById($id)
     {
         /**
          * @var Notes $note
@@ -424,7 +341,7 @@ class NoteRepository extends Repository
         $note = $this->entityManager->getRepository(Notes::class)->findOneBy(array('id' => $id));
 
         if ($note != null) {
-            $note->setPrivate(!$note->getPrivate());
+            $note->setPrivada(!$note->isPrivada());
         } else {
             return null;
         }
@@ -438,4 +355,5 @@ class NoteRepository extends Repository
 
         return $note->getArray();
     }
+
 }

@@ -1,20 +1,26 @@
 <?php
 
+namespace App\controllers;
 
+use App\Repository\NoteRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
+
 class NoteController
 {
-    private $noteResource;
+
+    private $noteRepository;
 
     /**
      * NotesAction constructor.
-     * @param $noteResource
+     * @param $noteRepository
      */
-    public function __construct(NotesResource $noteResource)
+    public function __construct(NoteRepository $noteRepository)
     {
-        $this->noteResource = $noteResource;
+        $this->noteRepository = $noteRepository;
     }
 
     /**
@@ -23,23 +29,18 @@ class NoteController
      * @param array $args
      * @return Response
      */
-    public function getMainPage(Request $request, Response $response, array $args)
+    public function getRoute(Request $request, Response $response, array $args)
     {
-        $mainPageToJson = $this->noteResource->getMainPageAction();
+        $mainPageToJson = $this->noteRepository->getRoutePage();
         return $response->withJson($mainPageToJson, 200);
 
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     */
+
     public function getAll(Request $request, Response $response, array $args)
     {
         $optionalSort = $request->getParam('sort') ?: null;
-        $notesToJson = $this->noteResource->getAllAction($optionalSort);
+        $notesToJson = $this->noteRepository->fetchAllNotes($optionalSort);
 
         if ($notesToJson['code'] == 200) {
             return $response->withJson($notesToJson, 200);
@@ -49,16 +50,11 @@ class NoteController
 
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     */
+
     public function getPublic(Request $request, Response $response, array $args)
     {
         $optionalSort = $request->getParam('sort') ?: null;
-        $publicNotesToJson = $this->noteResource->getPublicAction($optionalSort);
+        $publicNotesToJson = $this->noteRepository->fetchAllPublic($optionalSort);
 
         if ($publicNotesToJson['code'] == 200) {
             return $response->withJson($publicNotesToJson, 200);
@@ -68,121 +64,74 @@ class NoteController
 
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     */
+
     public function getOne(Request $request, Response $response, array $args)
     {
         $id = $request->getParam('id');
-        $noteToJson = $this->noteResource->getOneAction($id);
+        if (!empty($id)){
+            $data = $this->noteRepository->fetchOneById($id);
 
-        if ($noteToJson['code'] == 200) {
-            return $response->withJson($noteToJson, 200);
-        } else {
-            return $response->withJson($noteToJson, 204);
+            if ($data['code'] == 200) {
+                return $response->withJson($data, 200);
+            } else {
+                return $response->withJson($data, 204);
+            }
+        }else{
+            $data = array('error' => 'Id field is empty');
+            return $response->withJson($data,400);
+
         }
     }
 
     public function insert(Request $request, Response $response, array $args)
     {
-        $bodyParameters = $request->getParsedBody();
-        $responseMessage = $this->noteResource->insertAction($bodyParameters);
-        return $response->withJson($responseMessage, $responseMessage['code']);
+        $body = $request->getParsedBody();
+        $data = $this->noteRepository->insertNote($body);
+        return $response->withJson($data, $data['code']);
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     */
+
     public function remove(Request $request, Response $response, array $args)
     {
+        //x-www-form-urlencoded to use Delete
         $id = $request->getParsedBody()['id'];
 
-        $responseStatus = $this->noteResource->removeAction($id);
+        $response = $this->noteRepository->removeNote($id);
 
-        if ($responseStatus == 200) {
-            $arr = array('code' => $responseStatus, 'msg' => 'Note deleted');
-            return $response->withJson($arr, $responseStatus);
+        if ($response == 200) {
+            $data = array('code' => $response, 'msg' => 'Note deleted');
+            return $response->withJson($data, $response);
         } else {
-            $arr = array('code' => $responseStatus, 'msg' => 'Note could not be deleted, try again');
-            return $response->withJson($arr, $responseStatus);
+            $data = array('code' => $response, 'msg' => 'Note could not be deleted');
+            return $response->withJson($data, $response);
         }
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     */
+
     public function getAllWithTag(Request $request, Response $response, array $args)
     {
         $tag = $request->getParam('tag');
-        $optionalSort = $request->getParam('sort') ?: null;
 
-        $arrResult = $this->noteResource->getAllWithTagAction($tag, $optionalSort);
+        $arrResult = $this->noteRepository->fetchAllWithTag($tag);
         return $response->withJson($arrResult, $arrResult['code']);
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     */
-    public function updateNote(Request $request, Response $response, array $args)
-    {
-        $body = $request->getParsedBody();
-        $id = $body['id'];
-        $title = $body['title'];
-        $content = $body['content'];
-        $array = null;
 
-        if ($body['user'] != null) {
-            $array = array('user' => $body['user']);
-        }
 
-        if ($body['book'] != null) {
-            if ($array != null) {
-                $array['book'] = $body['book'];
-            } else {
-                $array = array('book' => $body['book']);
-            }
-        }
 
-        $newNote = $this->noteResource->updateNoteAction($id, $title, $content, $array);
-
-        if ($newNote != null) {
-            $arr = array('code' => 200, 'msg' => 'Note updated successfully', 'note' => $newNote);
-            return $response->withJson($arr, 200);
-        } else {
-            $arr = array('code' => 409, 'msg' => 'Could not update note');
-            return $response->withJson($arr, 409);
-        }
-    }
-
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     * @throws ORMException
-     */
     public function addTagOnNote(Request $request, Response $response, array $args)
     {
         $body = $request->getParsedBody();
         $id = $body['id'];
         $tag = $body['tag'];
 
-        $responseStatus = $this->noteResource->addTagOnNoteAction($id, $tag);
+        try {
+            $responseStatus = $this->noteRepository->updateNoteTag($id, $tag);
+        } catch (ORMException $e) {
+        }
 
         if ($responseStatus == 200) {
-            $noteToJson = $this->noteResource->getOneAction($id);
+            $noteToJson = $this->noteRepository->fetchOneById($id);
             $arr = array('code' => $responseStatus, 'msg' => 'Note updated successfully', 'result' => $noteToJson);
             return $response->withJson($arr, $responseStatus);
         } else if ($responseStatus == 204) {
@@ -194,15 +143,8 @@ class NoteController
         }
     }
 
-    /**
-     * @param Request $request
-     * @param Response $response
-     * @param array $args
-     * @return Response
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-    public function removeTagOnNote(Request $request, Response $response, array $args)
+
+    public function deleteTagOnNote(Request $request, Response $response, array $args)
     {
         $responseStatus = $response->getStatusCode();
         $body = $request->getParsedBody();
@@ -211,7 +153,11 @@ class NoteController
         $tag = $body['tag'];
 
         if ($responseStatus == 200) {
-            $newNote = $this->noteResource->removeTagOnOne($id, $tag);
+            try {
+                $newNote = $this->noteRepository->removeTagOnOne($id, $tag);
+            } catch (OptimisticLockException $e) {
+            } catch (ORMException $e) {
+            }
             if ($newNote != null) {
                 $arr = array('code' => $responseStatus, 'msg' => 'Note updated successfully', 'note' => $newNote);
                 return $response->withJson($arr, $responseStatus);
@@ -226,6 +172,44 @@ class NoteController
         return $response->withJson($arr, $responseStatus);
     }
 
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @param array $args
+     * @return Response
+     */
+    public function updateNote(Request $request, Response $response, array $args)
+    {
+        $body = $request->getParsedBody();
+
+        $id = $body['id'];
+        $title = $body['titulo'];
+        $content = $body['descripcion'];
+        if (isset($body['book'])){
+            $book = $body['book'];
+        }else{
+            $book = "";
+        }
+
+        if (isset($body['usuario'])){
+            $usuario = $body['usuario'];
+        }else{
+            $usuario = "";
+        }
+
+
+        $newNote = $this->noteRepository->updateNote($id, $title, $content, $book, $usuario);
+
+        if ($newNote != null) {
+            $arr = array('code' => 200, 'msg' => 'Note updated', 'note' => $newNote);
+            return $response->withJson($arr, 200);
+        } else {
+            $arr = array('code' => 409, 'msg' => 'Could not update note');
+            return $response->withJson($arr, 409);
+        }
+    }
+
+
 
     /**
      * @param Request $request
@@ -238,10 +222,10 @@ class NoteController
         $data = $request->getParsedBody();
 
         $id = $data['id'];
-        $newNote = $this->noteResource->flipPrivateOnOne($id);
+        $newNote = $this->noteRepository->changePrivateById($id);
 
         if ($newNote != null) {
-            $arr = array('code' => 200, 'msg' => 'Note updated successfully', 'note' => $newNote);
+            $arr = array('code' => 200, 'msg' => 'Note private chaged correctly', 'note' => $newNote);
             return $response->withJson($arr, 200);
         } else {
             $arr = array('code' => 409, 'msg' => 'Could not update note');
@@ -249,8 +233,4 @@ class NoteController
         }
     }
 
-
 }
-
-
-

@@ -1,7 +1,8 @@
 <?php
 
+namespace App\entity;
 
-
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -45,28 +46,28 @@ class Notes
     /**
      * @var string
      *
-     * @ORM\Column(name="tag1", type="string", length=20, nullable=false)
+     * @ORM\Column(name="tag1", type="string", length=20, nullable=true)
      */
     private $tag1;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="tag2", type="string", length=20, nullable=false)
+     * @ORM\Column(name="tag2", type="string", length=20, nullable=true)
      */
     private $tag2;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="tag3", type="string", length=20, nullable=false)
+     * @ORM\Column(name="tag3", type="string", length=20, nullable=true)
      */
     private $tag3;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="tag4", type="string", length=20, nullable=false)
+     * @ORM\Column(name="tag4", type="string", length=20, nullable=true)
      */
     private $tag4;
 
@@ -85,18 +86,26 @@ class Notes
     private $fechaCreacion;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="ultima_modificacion", type="datetime", nullable=false)
+     * @ORM\Column(name="ultima_modificacion", type="datetime", nullable=true)
      */
     private $ultimaModificacion;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="usuario", type="string", length=50, nullable=false)
+     * @ORM\Column(name="usuario", type="string", length=50, nullable=true)
      */
     private $usuario;
+
+    /**
+     * @return array
+     */
+    public function getArray()
+    {
+        return get_object_vars($this);
+    }
 
     /**
      * @return string
@@ -273,8 +282,6 @@ class Notes
     {
         $this->usuario = $usuario;
     }
-
-
 
 
 }

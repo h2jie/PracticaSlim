@@ -1,7 +1,12 @@
 {
     "name": "slim/slim-skeleton",
     "description": "A Slim Framework skeleton application for rapid development",
-    "keywords": ["microframework", "rest", "router", "psr7"],
+    "keywords": [
+        "microframework",
+        "rest",
+        "router",
+        "psr7"
+    ],
     "homepage": "http://github.com/slimphp/Slim-Skeleton",
     "license": "MIT",
     "authors": [
@@ -27,15 +32,17 @@
         }
     },
     "config": {
-        "process-timeout" : 0
+        "process-timeout": 0
     },
     "scripts": {
         "start": "php -S localhost:8080 -t public",
         "test": "phpunit"
     },
-
     "autoload": {
-        "psr-0": {"": "src/"}
-    }
+        "psr-0": {
+            "": "src/",
+            "App\\": "app"
 
+        }
+    }
 }

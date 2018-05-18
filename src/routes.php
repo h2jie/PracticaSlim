@@ -1,11 +1,8 @@
 <?php
 
-use Slim\Http\Request;
-use Slim\Http\Response;
+use App\controllers\NoteController;
 
-// Routes
-
-$app->get('/', NoteController::class . ':getMainPage');
+$app->get('/', NoteController::class . ':getRoute');
 
 $app->get('/getAll', NoteController::class . ':getAll');
 
@@ -21,7 +18,7 @@ $app->get('/getAllWithTag', NoteController::class . ':getAllWithTag');
 
 $app->put('/addTagOnNote', NoteController::class . ':addTagOnNote');
 
-$app->put('/deleteTagOnNote', NoteController::class . ':removeTagOnNote');
+$app->put('/deleteTagOnNote', NoteController::class . ':deleteTagOnNote');
 
 $app->put('/updateNote', NoteController::class . ':updateNote');
 

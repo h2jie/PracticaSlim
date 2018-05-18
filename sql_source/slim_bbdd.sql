@@ -2,10 +2,9 @@
 -- version 4.7.4
 -- https://www.phpmyadmin.net/
 --
--- Servidor: localhost
--- Tiempo de generación: 23-04-2018 a las 18:59:06
--- Versión del servidor: 10.1.28-MariaDB
--- Versión de PHP: 7.1.10
+-- Servidor: 127.0.0.1
+-- Versión del servidor: 10.1.26-MariaDB
+-- Versión de PHP: 7.1.9
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -30,31 +29,25 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `notes` (
   `id` int(11) NOT NULL,
-  `title` varchar(40) NOT NULL,
-  `content` text,
-  `private` tinyint(1) NOT NULL,
-  `tag1` varchar(11) DEFAULT NULL,
-  `tag2` varchar(11) DEFAULT NULL,
-  `tag3` varchar(11) DEFAULT NULL,
-  `tag4` varchar(11) DEFAULT NULL,
-  `book` varchar(20) NOT NULL,
-  `create_date` datetime NOT NULL,
-  `last_modification` datetime DEFAULT NULL,
-  `id_usuario` int(11) DEFAULT NULL
+  `titulo` varchar(40) NOT NULL,
+  `descripcion` varchar(150) NOT NULL,
+  `privada` tinyint(1) NOT NULL,
+  `tag1` varchar(20) DEFAULT NULL,
+  `tag2` varchar(20) DEFAULT NULL,
+  `tag3` varchar(20) DEFAULT NULL,
+  `tag4` varchar(20) DEFAULT NULL,
+  `book` varchar(150) NOT NULL,
+  `fecha_creacion` datetime NOT NULL,
+  `ultima_modificacion` datetime DEFAULT NULL,
+  `usuario` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- --------------------------------------------------------
-
 --
--- Estructura de tabla para la tabla `usuario`
+-- Volcado de datos para la tabla `notes`
 --
 
-CREATE TABLE `usuario` (
-  `id` int(11) NOT NULL,
-  `username` varchar(20) DEFAULT NULL,
-  `password` varchar(30) DEFAULT NULL,
-  `token` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+INSERT INTO `notes` (`id`, `titulo`, `descripcion`, `privada`, `tag1`, `tag2`, `tag3`, `tag4`, `book`, `fecha_creacion`, `ultima_modificacion`, `usuario`) VALUES
+(3, 'nuevotit ', 'newdesc2tit', 1, NULL, 'nidea', NULL, NULL, 'va esta eS?', '2018-05-18 12:20:06', '2018-05-18 12:31:49', 'nosee');
 
 --
 -- Índices para tablas volcadas
@@ -64,13 +57,6 @@ CREATE TABLE `usuario` (
 -- Indices de la tabla `notes`
 --
 ALTER TABLE `notes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_user` (`id_usuario`);
-
---
--- Indices de la tabla `usuario`
---
-ALTER TABLE `usuario`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -81,23 +67,7 @@ ALTER TABLE `usuario`
 -- AUTO_INCREMENT de la tabla `notes`
 --
 ALTER TABLE `notes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `usuario`
---
-ALTER TABLE `usuario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- Restricciones para tablas volcadas
---
-
---
--- Filtros para la tabla `notes`
---
-ALTER TABLE `notes`
-  ADD CONSTRAINT `fk_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuario` (`id`);
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

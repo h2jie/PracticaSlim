@@ -26,7 +26,8 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Interop\\Container\\": "src/Interop/Container/"
+                    "Interop\\Container\\": "src/Interop/Container/",
+                    "App\\" : "app"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
